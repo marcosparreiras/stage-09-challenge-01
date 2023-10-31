@@ -1,17 +1,50 @@
+import { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../../contexts/auth';
 import { Link } from 'react-router-dom';
 import { FiPlus } from 'react-icons/fi';
 import { Container } from './styles';
 import Header from '../../components/Header';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
+import api from '../../services/axios/api';
 
-const text =
-    'Pragas nas colheitas fizeram a civilização humana regredir para uma sociedade agrária em futuro de data desconhecida. Cooper, ex-piloto da NASA, tem uma fazenda com sua família. Murphy, a filha de dez anos de Cooper, acredita que seu quarto está assombrado por um fantasma que tenta se comunicar com ela. Pai e filha descobrem que o "fantasma" é uma inteligência desconhecida que está enviando mensagens codificadas através de radiação gravitacional, deixando coordenadas em binário que os levam até uma instalação secreta da NASA liderada pelo professor John Brand. O cientista revela que um buraco de minhoca foi aberto perto de Saturno e que ele leva a planetas que podem oferecer condições de sobrevivência para a espécie humana. As "missões Lázaro" enviadas anos antes identificaram três planetas potencialmente habitáveis orbitando o buraco negro Gargântua: Miller, Edmunds e Mann – nomeados em homenagem aos astronautas que os pesquisaram. Brand recruta Cooper para pilotar a nave espacial Endurance e recuperar os dados dos astronautas; se um dos planetas se mostrar habitável, a humanidade irá seguir para ele na instalação da NASA, que é na realidade uma enorme estação espacial. A partida de Cooper devasta Murphy. Além de Cooper, a tripulação da Endurance é formada pela bióloga Amelia, filha de Brand; o cientista Romilly, o físico planetário Doyle, além dos robôs TARS e CASE. Eles entram no buraco de minhoca e se dirigem a Miller, porém descobrem que o planeta possui enorme dilatação gravitacional temporal por estar tão perto de Gargântua: cada hora na superfície equivale a sete anos na Terra. Eles entram em Miller e descobrem que é inóspito já que é coberto por um oceano raso e agitado por ondas enormes. Uma onda atinge a tripulação enquanto Amelia tenta recuperar os dados de Miller, matando Doyle e atrasando a partida. Ao voltarem para a Endurance, Cooper e Amelia descobrem que 23 anos se passaram.';
-
+/* eslint-disable */
 function Home() {
+    const [notes, setNotes] = useState([]);
+    const [search, setSearch] = useState('');
+    const { user } = useContext(AuthContext);
+
+    useEffect(() => {
+        async function fetchNotes() {
+            try {
+                let response;
+                if (search) {
+                    response = await api.get(`notes?title=${search}`);
+                } else {
+                    response = await api.get('notes');
+                }
+                const userNotes = response.data.movies_notes.filter(
+                    (note) => note.user_id === user.id
+                );
+                setNotes(userNotes.reverse());
+            } catch (error) {
+                if (error.response) {
+                    alert(error.response.data.message);
+                    return;
+                }
+                alert('Algo deu errado, tente novamente');
+            }
+        }
+        fetchNotes();
+    }, [search]);
+
     return (
         <Container>
-            <Header />
+            <Header
+                showInput
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+            />
             <main>
                 <div className='title'>
                     <h2>Meus Filmes</h2>
@@ -20,34 +53,17 @@ function Home() {
                     </Link>
                 </div>
                 <div className='card-container'>
-                    <Card
-                        title='Interestellar'
-                        rating={3}
-                        text={text}
-                        tags={['Ficção Científica', 'Drama', 'Família']}
-                        id={1}
-                    />
-                    <Card
-                        title='Interestellar'
-                        rating={3}
-                        text={text}
-                        tags={['Ficção Científica', 'Drama', 'Família']}
-                        id={1}
-                    />
-                    <Card
-                        title='Interestellar'
-                        rating={3}
-                        text={text}
-                        tags={['Ficção Científica', 'Drama', 'Família']}
-                        id={1}
-                    />
-                    <Card
-                        title='Interestellar'
-                        rating={3}
-                        text={text}
-                        tags={['Ficção Científica', 'Drama', 'Família']}
-                        id={1}
-                    />
+                    {notes &&
+                        notes.map((note) => (
+                            <Card
+                                key={String(note.id)}
+                                title={note.title}
+                                rating={note.rating}
+                                text={note.description}
+                                tags={note.tags}
+                                id={note.id}
+                            />
+                        ))}
                 </div>
             </main>
         </Container>

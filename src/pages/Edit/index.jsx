@@ -1,32 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Container } from './styles';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/axios/api';
 import { FiArrowLeft } from 'react-icons/fi';
 import Header from '../../components/Header';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
-import Mark from '../../components/Mark';
 
-function Create() {
+/* eslint-disable */
+function Edit() {
     const [title, setTitle] = useState('');
     const [rating, setRating] = useState('');
     const [description, setDescription] = useState('');
-    const [tags, setTags] = useState([]);
-    const [newTag, setNewTag] = useState('');
     const navigate = useNavigate();
+    const params = useParams();
 
     async function handleSubmit(e) {
         e.preventDefault();
-        if (!title || !rating || !description || tags.length === 0) {
+        if (!title || !rating || !description) {
             alert('Preencha todos os campos');
             return;
         }
         try {
-            await api.post('notes', { title, rating, description, tags });
-            alert('Nota criada com sucesso');
-            navigate('/');
+            await api.put(`notes/${params.id}`, {
+                title,
+                rating,
+                description,
+            });
+            alert('Nota editada com sucesso');
+            navigate(`/preview/${params.id}`);
         } catch (error) {
+            console.log(error);
             if (error.response) {
                 alert(error.response.data.message);
                 return;
@@ -35,33 +39,53 @@ function Create() {
         }
     }
 
-    function handleAddTag() {
-        setTags((prevState) => [...prevState, newTag]);
-        setNewTag('');
+    async function handleDeleteNote() {
+        if (!confirm('Tem certeza que quer excluir essa nota')) {
+            return;
+        }
+        try {
+            await api.delete(`notes/${params.id}`);
+            alert('Nota excluida com sucesso');
+            navigate('/');
+        } catch (error) {
+            console.log(error);
+            if (error.response) {
+                alert(error.response.data.message);
+                return;
+            }
+            alert('Algo deu errado, tente novamente');
+        }
     }
 
-    function handleRemoveTag(tagName) {
-        setTags((prevState) => prevState.filter((tag) => tag !== tagName));
-    }
-
-    function handleClearNote() {
-        setTitle('');
-        setRating('');
-        setDescription('');
-        setTags([]);
-        setNewTag('');
-    }
+    useEffect(() => {
+        async function fetchNote() {
+            try {
+                const response = await api.get(`notes/${params.id}`);
+                const { note } = response.data;
+                setTitle(note.title);
+                setRating(note.rating);
+                setDescription(note.description);
+            } catch (error) {
+                if (error.response) {
+                    alert(error.response.data.message);
+                    return;
+                }
+                alert('Algo deu errado, tente novamente');
+            }
+        }
+        fetchNote();
+    }, []);
 
     return (
         <Container>
             <Header />
             <main>
-                <Link to='/'>
+                <Link to={`/preview/${params.id}`}>
                     <FiArrowLeft />
                     voltar
                 </Link>
 
-                <h2>Novo filme</h2>
+                <h2>Editar filme</h2>
 
                 <form onSubmit={handleSubmit}>
                     <div className='flex'>
@@ -83,34 +107,14 @@ function Create() {
                         onChange={(e) => setDescription(e.target.value)}
                         value={description}
                     />
-
-                    <div>
-                        <h3>Marcadores</h3>
-                        <div className='mark-inputs'>
-                            {tags &&
-                                tags.map((tag, index) => (
-                                    <Mark
-                                        value={tag}
-                                        key={String(index)}
-                                        onClick={() => handleRemoveTag(tag)}
-                                        isnew
-                                    />
-                                ))}
-                            <Mark
-                                onClick={handleAddTag}
-                                onChange={(e) => setNewTag(e.target.value)}
-                                value={newTag}
-                            />
-                        </div>
-                    </div>
                     <div className='flex'>
                         <Button
-                            title='Limpar nota'
+                            title='Excluir'
                             mode='dark'
                             type='button'
-                            onClick={handleClearNote}
+                            onClick={handleDeleteNote}
                         />
-                        <Button title='Criar nota' type='submit' />
+                        <Button title='Salvar aleterações' type='submit' />
                     </div>
                 </form>
             </main>
@@ -118,4 +122,4 @@ function Create() {
     );
 }
 
-export default Create;
+export default Edit;

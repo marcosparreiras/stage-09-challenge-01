@@ -43,7 +43,7 @@ export const Container = styled.div`
             width: 18.6rem;
             height: 18.6rem;
             border-radius: 50%;
-            object-fit: contain;
+            object-fit: cover;
         }
 
         label {

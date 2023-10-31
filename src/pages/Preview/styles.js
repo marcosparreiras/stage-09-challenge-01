@@ -8,11 +8,16 @@ export const Container = styled.div`
         height: calc(100% - 8rem);
         overflow-y: auto;
 
-        > a {
+        > .link-conatiner {
             display: flex;
             align-items: center;
-            gap: 0.8rem;
-            color: ${({ theme }) => theme.COLORS.PINK};
+            justify-content: space-between;
+            a {
+                display: flex;
+                align-items: center;
+                gap: 0.8rem;
+                color: ${({ theme }) => theme.COLORS.PINK};
+            }
         }
 
         > p {
